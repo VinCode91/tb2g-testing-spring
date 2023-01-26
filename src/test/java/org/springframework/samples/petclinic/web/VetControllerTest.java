@@ -9,16 +9,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.samples.petclinic.model.Vet;
 import org.springframework.samples.petclinic.model.Vets;
 import org.springframework.samples.petclinic.service.ClinicService;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
 @ExtendWith(MockitoExtension.class)
 class VetControllerTest {
@@ -29,6 +30,8 @@ class VetControllerTest {
 
     List<Vet> allVets;
 
+    MockMvc mockMvc;
+
     @BeforeEach
     void setUp() {
         Vet vet1 = new Vet();
@@ -38,7 +41,20 @@ class VetControllerTest {
         vet2.setFirstName("Linda");
         vet2.setLastName("Douglas");
         allVets = new ArrayList<>(Arrays.asList(vet1, vet2));
-        given(clinicService.findVets()).willReturn(allVets);
+        when(clinicService.findVets()).thenReturn(allVets);
+
+        mockMvc = standaloneSetup(vetController).build();
+    }
+
+    /** On peut directement utiliser l'objet model fourni par Spring MVC Test
+     * au lieu d'un mock Mockito ou d'instancier carrément
+     * un objet model comme dans {@link #showVetList()} */
+    @Test
+    void testControllerShowVetList() throws Exception {
+        mockMvc.perform(get("/vets.html"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeExists("vets"))
+                .andExpect(view().name("vets/vetList"));
     }
 
     @Test
